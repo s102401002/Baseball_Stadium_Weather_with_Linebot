@@ -2,7 +2,7 @@ name: Deploy to Cloud Run
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 # ⭐ OIDC 必須要這行，否則 google-github-actions/auth 會拿不到 ID token
 permissions:
@@ -11,9 +11,9 @@ permissions:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION:     ${{ secrets.GCP_REGION }}         # 例：asia-east1
-  SERVICE:    ${{ secrets.CLOUD_RUN_SERVICE }}  # 例：stadiumweather
-  IMAGE:      ${{ secrets.GCP_IMAGE || format('gcr.io/{0}/{1}:{2}', secrets.GCP_PROJECT_ID, 'app', github.sha) }}
+  REGION: ${{ secrets.GCP_REGION }} # 例：asia-east1
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }} # 例：stadiumweather
+  IMAGE: ${{ secrets.GCP_IMAGE || format('gcr.io/{0}/{1}:{2}', secrets.GCP_PROJECT_ID, 'app', github.sha) }}
 
 jobs:
   deploy:
@@ -28,8 +28,8 @@ jobs:
       - name: Auth to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}  # 形如：projects/123/locations/global/workloadIdentityPools/gh-pool/providers/gh-provider
-          service_account: ${{ secrets.GCP_SA_EMAIL }}                 # 形如：github-actions-deployer@<project-id>.iam.gserviceaccount.com
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }} # 形如：projects/123/locations/global/workloadIdentityPools/gh-pool/providers/gh-provider
+          service_account: ${{ secrets.GCP_SA_EMAIL }} # 形如：github-actions-deployer@<project-id>.iam.gserviceaccount.com
 
       # 2) 安裝 gcloud
       - name: Set up gcloud
@@ -51,10 +51,10 @@ jobs:
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE }}
-          region:  ${{ env.REGION }}
-          image:   ${{ env.IMAGE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.IMAGE }}
           project_id: ${{ env.PROJECT_ID }}
           flags: --allow-unauthenticated
 
-      - name: Show URL
-        run: echo "Deployed URL: ${{ steps.deploy.outputs.url }}"
+      # - name: Show URL
+      # run: echo "Deployed URL: ${{ steps.deploy.outputs.url }}"
