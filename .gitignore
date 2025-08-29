@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.png
+*.jpg
+*.jpeg
+line_secret.py
+command.txt
