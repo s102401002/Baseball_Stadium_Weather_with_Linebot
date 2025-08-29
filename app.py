@@ -89,7 +89,7 @@ def build_flex_all(stadium: str, data: dict) -> FlexSendMessage:
             })
 
     return FlexSendMessage(
-        alt_text=f"{stadium} 天氣預報",
+        alt_text=f"{stadium} 近日天氣預報",
         contents={"type": "carousel", "contents": bubbles[:10]}
     )
 @handler.add(MessageEvent, message=TextMessage)

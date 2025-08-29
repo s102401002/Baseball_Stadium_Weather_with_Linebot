@@ -6,5 +6,6 @@ __pycache__/
 *.png
 *.jpg
 *.jpeg
+*.ps1
 line_secret.py
 command.txt
