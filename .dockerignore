@@ -9,3 +9,6 @@ README.md
 *.png
 *.jpg
 *.jpeg
+*.ps1
+line_secret.py
+command.txt

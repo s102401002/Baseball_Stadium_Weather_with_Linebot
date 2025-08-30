@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
 
-# ⭐ OIDC 必須要這行，否則 google-github-actions/auth 會拿不到 ID token
+# OIDC 必須要這行，否則 google-github-actions/auth 會拿不到 ID token
 permissions:
   contents: read
   id-token: write
