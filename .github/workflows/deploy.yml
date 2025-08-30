@@ -35,7 +35,7 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      # 3) （有 Dockerfile 就 build & push；若用 Cloud Build/Buildpacks 可改成你慣用的方式）
+      # 3) （有 Dockerfile 就 build & push；若用 Cloud Build/Buildpacks）
       - name: Configure Docker auth
         run: gcloud auth configure-docker --quiet
 
