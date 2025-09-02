@@ -9,15 +9,16 @@ permissions:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
-  REGION: ${{ secrets.GCP_REGION }}
-  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
-  REPO: app
+  REGION: ${{ secrets.GCP_REGION }}                    # 例如 asia-east1
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}            # 例如 stadiumweather
+  REPO: app                                            # 你的 AR repo 名
   IMAGE: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/app/app:${{ github.sha }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
@@ -36,15 +37,17 @@ jobs:
           gcloud config list
 
       - name: Sanity check Artifact Registry repo
-        run: gcloud artifacts repositories describe "$REPO" --location "$REGION" --project "$PROJECT_ID"
+        run: |
+          gcloud artifacts repositories describe "$REPO" \
+            --location "$REGION" --project "$PROJECT_ID"
 
       - name: Docker login to Artifact Registry
         run: |
           set -eux
-          HOST="${{ secrets.GCP_REGION }}-docker.pkg.dev"
+          HOST="$REGION-docker.pkg.dev"
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
-          echo "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin "https://${HOST}"
-          gcloud auth configure-docker "${HOST}" --quiet
+          echo "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin "https://$HOST"
+          gcloud auth configure-docker "$HOST" --quiet
 
       - name: Build & Push image
         run: |
@@ -65,5 +68,5 @@ jobs:
             --allow-unauthenticated
             --set-env-vars LINE_CHANNEL_SECRET=${{ secrets.LINE_CHANNEL_SECRET }},LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
 
-      # - name: Show URL
-      #   run: echo "Deployed URL: ${{ steps.deploy.outputs.url }}"
+      - name: Show URL
+        run: echo "Deployed URL: ${{ steps.deploy.outputs.url }}"
