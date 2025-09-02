@@ -10,9 +10,9 @@ permissions:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
-  REGION: ${{ secrets.GCP_REGION }}
-  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
-  REPO: app
+  REGION: ${{ secrets.GCP_REGION }}                 # asia-east1（和 AR repo 同區）
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}         # stadiumweather
+  REPO: app                                         # AR repo 名
   IMAGE: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/app/app:${{ github.sha }}
 
 jobs:
@@ -33,13 +33,26 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      # 換成 <region>-docker.pkg.dev
-      - name: Configure Docker auth (Artifact Registry)
-        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+      # 檢查：repo 是否存在（避免 push 到不存在的 repo）
+      - name: Sanity check Artifact Registry repo
+        run: |
+          set -eux
+          gcloud artifacts repositories describe "$REPO" --location "$REGION" --project "$PROJECT_ID"
+
+      # 為了避免 Docker 用匿名 push，顯式登入 AR
+      - name: Docker login to Artifact Registry
+        run: |
+          set -eux
+          HOST="${REGION}-docker.pkg.dev"
+          ACCESS_TOKEN="$(gcloud auth print-access-token)"
+          echo "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin "https://${HOST}"
+          # 也保險設定 cred helper（兩種都設最穩）
+          gcloud auth configure-docker "${HOST}" --quiet
 
       - name: Build & Push image
         run: |
           set -euxo pipefail
+          echo "IMAGE=$IMAGE"
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
 
