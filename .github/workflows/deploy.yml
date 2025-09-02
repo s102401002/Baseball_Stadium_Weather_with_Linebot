@@ -4,16 +4,16 @@ on:
   push:
     branches: [main]
 
-# OIDC 必須要這行，否則 google-github-actions/auth 會拿不到 ID token
 permissions:
   contents: read
   id-token: write
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
-  REGION: ${{ secrets.GCP_REGION }} # 例：asia-east1
-  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }} # 例：stadiumweather
-  IMAGE: ${{ secrets.GCP_IMAGE || format('gcr.io/{0}/{1}:{2}', secrets.GCP_PROJECT, 'app', github.sha) }}
+  REGION: ${{ secrets.GCP_REGION }}                # 和建 AR repo 的同區域）
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}        # stadiumweather
+  REPO: app                                        # Artifact Registry 建的 repo 名
+  IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/app:${{ github.sha }}
 
 jobs:
   deploy:
@@ -24,20 +24,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1) 透過 OIDC 交換短期憑證（Workload Identity Federation）
       - name: Auth to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }} # 形如：projects/123/locations/global/workloadIdentityPools/gh-pool/providers/gh-provider
-          service_account: ${{ secrets.GCP_SA_EMAIL }} # 形如：github-actions-deployer@<project-id>.iam.gserviceaccount.com
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
 
-      # 2) 安裝 gcloud
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      # 3) （有 Dockerfile 就 build & push；若用 Cloud Build/Buildpacks）
-      - name: Configure Docker auth
-        run: gcloud auth configure-docker --quiet
+      # 換成 <region>-docker.pkg.dev
+      - name: Configure Docker auth (Artifact Registry)
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       - name: Build & Push image
         run: |
@@ -45,7 +43,6 @@ jobs:
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
 
-      # 4) 部署到 Cloud Run
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
@@ -55,6 +52,3 @@ jobs:
           image: ${{ env.IMAGE }}
           project_id: ${{ env.PROJECT_ID }}
           flags: --allow-unauthenticated
-
-      # - name: Show URL
-      # run: echo "Deployed URL: ${{ steps.deploy.outputs.url }}"
