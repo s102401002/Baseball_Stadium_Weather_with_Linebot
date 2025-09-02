@@ -10,10 +10,10 @@ permissions:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
-  REGION: ${{ secrets.GCP_REGION }}                # 和建 AR repo 的同區域）
-  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}        # stadiumweather
-  REPO: app                                        # Artifact Registry 建的 repo 名
-  IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/app:${{ github.sha }}
+  REGION: ${{ secrets.GCP_REGION }}
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+  REPO: app
+  IMAGE: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/app/app:${{ github.sha }}
 
 jobs:
   deploy:
