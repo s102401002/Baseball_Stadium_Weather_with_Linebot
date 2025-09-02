@@ -10,9 +10,9 @@ permissions:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
-  REGION: ${{ secrets.GCP_REGION }}                 # asia-east1（和 AR repo 同區）
-  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}         # stadiumweather
-  REPO: app                                         # AR repo 名
+  REGION: ${{ secrets.GCP_REGION }}                      #  AR repo 同區
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+  REPO: app
   IMAGE: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/app/app:${{ github.sha }}
 
 jobs:
@@ -21,8 +21,7 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Auth to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
@@ -33,20 +32,17 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      # 檢查：repo 是否存在（避免 push 到不存在的 repo）
       - name: Sanity check Artifact Registry repo
         run: |
           set -eux
           gcloud artifacts repositories describe "$REPO" --location "$REGION" --project "$PROJECT_ID"
 
-      # 為了避免 Docker 用匿名 push，顯式登入 AR
       - name: Docker login to Artifact Registry
         run: |
           set -eux
-          HOST="${REGION}-docker.pkg.dev"
+          HOST="${{ secrets.GCP_REGION }}-docker.pkg.dev"
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
           echo "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin "https://${HOST}"
-          # 也保險設定 cred helper（兩種都設最穩）
           gcloud auth configure-docker "${HOST}" --quiet
 
       - name: Build & Push image
@@ -64,4 +60,10 @@ jobs:
           region: ${{ env.REGION }}
           image: ${{ env.IMAGE }}
           project_id: ${{ env.PROJECT_ID }}
-          flags: --allow-unauthenticated
+          # 同時把 LINE 機密帶進服務環境變數
+          flags: >
+            --allow-unauthenticated
+            --set-env-vars LINE_CHANNEL_SECRET=${{ secrets.LINE_CHANNEL_SECRET }},LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+
+      - name: Show URL
+        run: echo "Deployed URL: ${{ steps.deploy.outputs.url }}"
