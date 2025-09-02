@@ -10,10 +10,10 @@ permissions:
   id-token: write
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT }}
   REGION: ${{ secrets.GCP_REGION }} # 例：asia-east1
   SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }} # 例：stadiumweather
-  IMAGE: ${{ secrets.GCP_IMAGE || format('gcr.io/{0}/{1}:{2}', secrets.GCP_PROJECT_ID, 'app', github.sha) }}
+  IMAGE: ${{ secrets.GCP_IMAGE || format('gcr.io/{0}/{1}:{2}', secrets.GCP_PROJECT, 'app', github.sha) }}
 
 jobs:
   deploy:
